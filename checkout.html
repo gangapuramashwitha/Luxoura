@@ -692,9 +692,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             <input type="text" id="chk-cvv" placeholder="123" maxlength="4"/>
           </div>
         </div>
-      </div><a href="index.html" class="btn-primary btn-place-order">
+      </div>
+     <button type="button" class="btn-primary btn-place-order" onclick="placeOrder()">
   Place Order →
-</a>
+</button>
+
      
       <p class="secure-note">🔒 Your payment is encrypted and secure. We never store card details.</p>
     </div>
@@ -956,6 +958,72 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
+ <script>
+function placeOrder() {
+  const requiredFields = [
+    'chk-email','chk-phone','chk-first','chk-last',
+    'chk-street','chk-city','chk-zip',
+    'chk-cardnum','chk-cardname','chk-expiry','chk-cvv'
+  ];
+
+  let valid = true;
+
+  // Validate required fields
+  requiredFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el.value.trim()) {
+      el.style.borderColor = 'red';
+      valid = false;
+    } else {
+      el.style.borderColor = '';
+    }
+  });
+
+  // Validate email
+  const emailEl = document.getElementById('chk-email');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value)) {
+    emailEl.style.borderColor = 'red';
+    valid = false;
+  }
+
+  if (!valid) {
+    showToast('Please fill all required fields correctly');
+    return;
+  }
+
+  const cart = getCart();
+  if (cart.length === 0) {
+    showToast('Your cart is empty');
+    return;
+  }
+
+  // Create order
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const shipping = 5.99;
+  const tax = subtotal * 0.08;
+  const total = subtotal + shipping + tax;
+
+  const order = {
+    orderId: 'LX-' + Math.floor(10000 + Math.random() * 90000),
+    name: document.getElementById('chk-first').value + ' ' +
+          document.getElementById('chk-last').value,
+    email: emailEl.value,
+    items: cart,
+    subtotal,
+    shipping,
+    tax,
+    total
+  };
+
+  // Save order & clear cart
+  sessionStorage.setItem('luxora_order', JSON.stringify(order));
+  sessionStorage.removeItem('luxora_cart');
+
+  // 👉 REDIRECT (this file MUST exist)
+  window.location.href = 'confirmation.html';
+}
+</script>
+
 <script>
   // ── Render order summary from cart ──
   function renderCheckoutSummary() {
